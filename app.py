@@ -101,6 +101,7 @@ GATES = {
     "AND": np.array([0, 0, 0, 1]),
     "OR": np.array([0, 1, 1, 1]),
     "XOR": np.array([0, 1, 1, 0]),
+    "NAND": np.array([1, 1, 1, 0]),
 }
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 
@@ -145,8 +146,12 @@ def graficar_frontera(snapshot, y, ax):
 def graficar_convergencia(history, epoca_actual, ax):
     epocas = [h[0] for h in history[1:]]
     errores = [h[3] for h in history[1:]]
-    colores = [COLOR_ACCENT if e == epoca_actual else COLOR_DIM for e in epocas]
-    ax.bar(epocas, errores, color=colores, width=0.8)
+    ax.fill_between(epocas, errores, step="mid", color=COLOR_DIM, alpha=0.7)
+    ax.plot(epocas, errores, drawstyle="steps-mid", color=COLOR_INK, linewidth=1.2)
+    if epoca_actual in epocas:
+        idx = epocas.index(epoca_actual)
+        ax.scatter([epoca_actual], [errores[idx]], color=COLOR_ACCENT, s=70, zorder=5,
+                   edgecolors="white", linewidths=1.5)
     ax.set_xlabel("Época"); ax.set_ylabel("Errores")
     ax.set_ylim(0, max(4, max(errores) if errores else 4))
     _style_axes(ax, "Convergencia — errores por época")
