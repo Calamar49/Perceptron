@@ -377,18 +377,26 @@ st.divider()
 
 # Tabla comparativa: repite el entrenamiento de la compuerta actual con dos tasas
 # de aprendizaje distintas (0.1 y 0.01) para mostrar el efecto de eta en cuantas
-# epocas tarda en converger (o si nunca converge, como con XOR).
+# epocas tarda en converger (o si nunca converge, como con XOR). Los pesos que
+# muestra son los de la MISMA epoca que indica el slider de arriba (no siempre el
+# resultado final), asi se puede comparar como iban ambas tasas en un punto dado.
 st.markdown(f"### Efecto de la tasa de aprendizaje — {gate}")
+st.caption(f"Pesos comparados en la época {epoca_idx} (la misma que el slider de arriba).")
 filas = []
 for lr_cmp in [0.1, 0.01]:
     hist_cmp, conv_cmp = entrenar(gate, lr_cmp, 300)
-    ultima = hist_cmp[-1]
+    # si esta tasa convergio antes de llegar a epoca_idx, el historial ya no crece
+    # mas alla de esa epoca (fit() corta ahi) — se usa la ultima disponible.
+    idx_cmp = min(epoca_idx, len(hist_cmp) - 1)
+    estado = hist_cmp[idx_cmp]
+    errores_cmp = "–" if estado[3] is None else estado[3]
     filas.append({
         "η": lr_cmp,
         "Épocas hasta converger": conv_cmp if conv_cmp is not None else "> 300 (no converge)",
-        "w1": round(ultima[1][0], 2),
-        "w2": round(ultima[1][1], 2),
-        "bias": round(ultima[2], 2),
+        f"w1 (época {idx_cmp})": round(estado[1][0], 2),
+        f"w2 (época {idx_cmp})": round(estado[1][1], 2),
+        f"bias (época {idx_cmp})": round(estado[2], 2),
+        "errores en esa época": errores_cmp,
     })
 st.table(filas)
 
