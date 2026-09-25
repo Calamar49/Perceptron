@@ -7,6 +7,8 @@ Desplegar:          share.streamlit.io (Community Cloud), apuntando a este
                      repo + este archivo.
 """
 
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
@@ -227,64 +229,86 @@ st.markdown(
 history, converged_at = entrenar(gate, lr, max_epochs)
 total_epocas = len(history) - 1
 
-epoca_idx = st.slider("Época", min_value=0, max_value=total_epocas, value=total_epocas)
-snapshot = history[epoca_idx]
-_, w, b, errores = snapshot
+col_slider, col_play = st.columns([5, 1])
+epoca_idx = col_slider.slider("Época", min_value=0, max_value=total_epocas, value=total_epocas)
+reproducir = col_play.button("▶ Reproducir", use_container_width=True)
 
 col_a, col_b = st.columns(2)
-with col_a:
+plot_ph_a = col_a.empty()
+plot_ph_b = col_b.empty()
+readout_ph = st.empty()
+eq_ph = st.empty()
+verdict_ph = st.empty()
+
+
+def _dibujar_epoca(idx):
+    snapshot = history[idx]
+    _, w, b, errores = snapshot
+
     fig1, ax1 = plt.subplots(figsize=(4.2, 4.2))
     graficar_frontera(snapshot, GATES[gate], ax1)
-    st.pyplot(fig1, clear_figure=True)
-with col_b:
+    plot_ph_a.pyplot(fig1, clear_figure=True)
+
     fig2, ax2 = plt.subplots(figsize=(4.6, 4.2))
-    graficar_convergencia(history, epoca_idx, ax2)
-    st.pyplot(fig2, clear_figure=True)
+    graficar_convergencia(history, idx, ax2)
+    plot_ph_b.pyplot(fig2, clear_figure=True)
 
-errores_txt = "–" if errores is None else str(errores)
-st.markdown(
-    f"""
-    <div class="readout">
-      <div class="cell"><div class="k">Peso w₁</div><div class="v">{w[0]:.2f}</div></div>
-      <div class="cell"><div class="k">Peso w₂</div><div class="v">{w[1]:.2f}</div></div>
-      <div class="cell"><div class="k">Sesgo b</div><div class="v">{b:.2f}</div></div>
-      <div class="cell"><div class="k">Errores esta época</div><div class="v">{errores_txt}</div></div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    f"""
-    <div class="live-eq">
-      <div class="tag">Ecuación con los pesos actuales</div>
-      <div class="eq">z = {w[0]:.2f}·x1 + {w[1]:.2f}·x2 + ({b:.2f})</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-if converged_at is not None and epoca_idx >= converged_at:
-    st.markdown(
-        f'<div class="verdict ok"><div class="tag">✓ Convergió</div>'
-        f'<p>El Perceptrón encontró una frontera que separa las dos clases sin errores en la época '
-        f'<strong>{converged_at}</strong>. La compuerta <strong>{gate}</strong> es linealmente separable.</p></div>',
+    errores_txt = "–" if errores is None else str(errores)
+    readout_ph.markdown(
+        f"""
+        <div class="readout">
+          <div class="cell"><div class="k">Peso w₁</div><div class="v">{w[0]:.2f}</div></div>
+          <div class="cell"><div class="k">Peso w₂</div><div class="v">{w[1]:.2f}</div></div>
+          <div class="cell"><div class="k">Sesgo b</div><div class="v">{b:.2f}</div></div>
+          <div class="cell"><div class="k">Errores esta época</div><div class="v">{errores_txt}</div></div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-elif epoca_idx == total_epocas and converged_at is None:
-    st.markdown(
-        f'<div class="verdict fail"><div class="tag">✕ No converge</div>'
-        f'<p>Tras <strong>{max_epochs}</strong> épocas, el error sigue sin llegar a cero '
-        f'(quedó en {errores}). <strong>{gate}</strong> no es linealmente separable — no existe ninguna '
-        'recta que separe sus dos clases, por eso el Perceptrón simple oscila indefinidamente en vez de converger.</p></div>',
+
+    eq_ph.markdown(
+        f"""
+        <div class="live-eq">
+          <div class="tag">Ecuación con los pesos actuales</div>
+          <div class="eq">z = {w[0]:.2f}·x1 + {w[1]:.2f}·x2 + ({b:.2f})</div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
+
+    if converged_at is not None and idx >= converged_at:
+        verdict_ph.markdown(
+            f'<div class="verdict ok"><div class="tag">✓ Convergió</div>'
+            f'<p>El Perceptrón encontró una frontera que separa las dos clases sin errores en la época '
+            f'<strong>{converged_at}</strong>. La compuerta <strong>{gate}</strong> es linealmente separable.</p></div>',
+            unsafe_allow_html=True,
+        )
+    elif idx == total_epocas and converged_at is None:
+        verdict_ph.markdown(
+            f'<div class="verdict fail"><div class="tag">✕ No converge</div>'
+            f'<p>Tras <strong>{max_epochs}</strong> épocas, el error sigue sin llegar a cero '
+            f'(quedó en {errores}). <strong>{gate}</strong> no es linealmente separable — no existe ninguna '
+            'recta que separe sus dos clases, por eso el Perceptrón simple oscila indefinidamente en vez de converger.</p></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        verdict_ph.markdown(
+            f'<div class="verdict ok"><div class="tag">⏳ Entrenando…</div>'
+            f'<p>Época <strong>{idx}</strong> de {max_epochs} — {errores} error(es) en esta pasada.</p></div>',
+            unsafe_allow_html=True,
+        )
+
+
+if reproducir:
+    max_frames = 60
+    paso = max(1, round(total_epocas / max_frames)) if total_epocas > max_frames else 1
+    indices = list(range(0, total_epocas, paso)) + [total_epocas]
+    delay = 0.4 if total_epocas <= 10 else 0.12
+    for idx in indices:
+        _dibujar_epoca(idx)
+        time.sleep(delay)
 else:
-    st.markdown(
-        f'<div class="verdict ok"><div class="tag">⏳ Entrenando…</div>'
-        f'<p>Época <strong>{epoca_idx}</strong> de {max_epochs} — {errores} error(es) en esta pasada.</p></div>',
-        unsafe_allow_html=True,
-    )
+    _dibujar_epoca(epoca_idx)
 
 st.divider()
 st.markdown(f"### Efecto de la tasa de aprendizaje — {gate}")
