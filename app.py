@@ -13,8 +13,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
+# layout="wide" para que quepan los dos graficos (frontera + convergencia) lado a lado
 st.set_page_config(page_title="Simulador del Perceptrón", page_icon="🧠", layout="wide")
 
+# Paleta de colores propia (no el tema por defecto de Streamlit), reutilizada tambien
+# en el notebook y en la version Gradio para que los tres luzcan iguales.
 COLOR_C0, COLOR_C1, COLOR_ACCENT, COLOR_DIM, COLOR_INK = (
     "#1a5fb4", "#c1440e", "#0a8f78", "#e4dcc7", "#211d15",
 )
@@ -22,6 +25,11 @@ plt.rcParams["figure.facecolor"] = "#fffdf8"
 plt.rcParams["axes.facecolor"] = "#fffdf8"
 plt.rcParams["font.family"] = "monospace"
 
+# ------------------------------------------------------------ ESTILO (CSS a medida)
+# Streamlit no permite personalizar tanto el diseño desde Python puro, asi que se
+# inyecta CSS crudo con st.markdown(..., unsafe_allow_html=True). Cada clase de aca
+# abajo se usa mas adelante en algun st.markdown con HTML (tabla de verdad, tarjetas
+# de ecuaciones, el panel de "readout" con los pesos, etc).
 st.markdown(
     """
     <style>
@@ -78,37 +86,50 @@ class Perceptron:
     def __init__(self, input_size, learning_rate=0.1, epochs=100):
         self.lr = learning_rate
         self.epochs = epochs
-        self.weights = np.zeros(input_size)
+        self.weights = np.zeros(input_size)  # arranca en w=[0, 0]
         self.bias = 0.0
         self.history = []  # snapshot de (epoca, pesos, bias, errores) por epoca
 
     def activation_function(self, z):
+        # Funcion escalon (Heaviside): 1 si z>=0, si no 0. Es lo que hace que el
+        # Perceptron sea un clasificador BINARIO y su frontera sea siempre una recta.
         return 1 if z >= 0 else 0
 
     def predict(self, x):
+        # z = w1*x1 + w2*x2 + b  (combinacion lineal de las entradas)
         z = np.dot(x, self.weights) + self.bias
         return self.activation_function(z)
 
     def fit(self, X, y):
+        # epoca 0 = estado inicial (pesos en cero), antes de aprender nada
         self.history = [(0, self.weights.copy(), self.bias, None)]
         converged_at = None
         for epoch in range(1, self.epochs + 1):
             total_errors = 0
             for xi, target in zip(X, y):
                 prediction = self.predict(xi)
-                error = target - prediction
+                error = target - prediction  # -1, 0 o +1
                 if error != 0:
+                    # Regla de aprendizaje del Perceptron:
+                    # w += lr * error * x   y   b += lr * error
+                    # Si predijo de mas, resta un poco de x a los pesos; si predijo
+                    # de menos, le suma. Si acerto (error=0), no toca nada.
                     self.weights = self.weights + self.lr * error * xi
                     self.bias = self.bias + self.lr * error
                     total_errors += 1
+            # se guarda una "foto" de los pesos al final de cada epoca, para poder
+            # despues recorrerlas una por una en el slider / la animacion
             self.history.append((epoch, self.weights.copy(), self.bias, total_errors))
             if total_errors == 0 and converged_at is None:
+                # 0 errores en una pasada completa por los 4 ejemplos = convergio
                 converged_at = epoch
-                break
+                break  # no hace falta seguir entrenando, ya encontro una solucion
         self.converged_at = converged_at
         return self
 
 
+# Las 4 compuertas logicas a simular, como tabla de verdad (mismo orden que X abajo:
+# (0,0), (0,1), (1,0), (1,1)). AND/OR/NAND son linealmente separables, XOR no.
 GATES = {
     "AND": np.array([0, 0, 0, 1]),
     "OR": np.array([0, 1, 1, 1]),
@@ -116,17 +137,21 @@ GATES = {
     "NAND": np.array([1, 1, 1, 0]),
 }
 
+# Texto de apoyo (expresion booleana + nota de separabilidad) que se muestra junto
+# a la tabla de verdad de la compuerta elegida.
 GATES_INFO = {
     "AND": {"simbolo": "y = x₁ ∧ x₂", "nota": "1 solo si ambas entradas son 1. Linealmente separable."},
     "OR": {"simbolo": "y = x₁ ∨ x₂", "nota": "1 si al menos una entrada es 1. Linealmente separable."},
     "XOR": {"simbolo": "y = x₁ ⊕ x₂", "nota": "1 solo si las entradas son distintas. NO es linealmente separable."},
     "NAND": {"simbolo": "y = ¬(x₁ ∧ x₂)", "nota": "el complemento de AND — compuerta universal. Linealmente separable."},
 }
-X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])  # las 4 combinaciones de entrada binaria
 
 
 @st.cache_data
 def entrenar(gate_name, lr, max_epochs):
+    # @st.cache_data evita re-entrenar si ya se pidio esta misma combinacion
+    # (compuerta, tasa de aprendizaje, epocas maximas) antes en la sesion.
     y = GATES[gate_name]
     p = Perceptron(input_size=2, learning_rate=lr, epochs=max_epochs)
     p.fit(X, y)
@@ -134,6 +159,8 @@ def entrenar(gate_name, lr, max_epochs):
 
 
 def _style_axes(ax, titulo):
+    # Aplica el mismo look (colores, tipografia) a cualquier grafico de matplotlib
+    # para que combine con el resto de la pagina en vez de verse "por defecto".
     ax.set_title(titulo, fontsize=12, fontweight="bold", color=COLOR_INK, pad=10)
     ax.tick_params(colors=COLOR_INK, labelsize=9)
     for spine in ax.spines.values():
@@ -143,6 +170,8 @@ def _style_axes(ax, titulo):
 
 
 def graficar_frontera(snapshot, y, ax):
+    """Dibuja los 4 puntos (x1, x2) coloreados por clase, mas la recta
+    w1*x1 + w2*x2 + b = 0 (despejada en funcion de x2) para los pesos de esa epoca."""
     _, w, b, _ = snapshot
     for clase, color, marcador in [(0, COLOR_C0, "o"), (1, COLOR_C1, "s")]:
         mascara = y == clase
@@ -150,9 +179,15 @@ def graficar_frontera(snapshot, y, ax):
                    s=260, edgecolors="white", linewidths=2, zorder=3, label=f"clase {clase}")
     x1_vals = np.linspace(-0.5, 1.5, 100)
     if abs(w[1]) > 1e-9:
+        # caso normal: despejar x2 = -(w1*x1 + b) / w2 y graficar la recta
         ax.plot(x1_vals, -(w[0] * x1_vals + b) / w[1], "--", color=COLOR_ACCENT, linewidth=2.5)
     elif abs(w[0]) > 1e-9:
+        # si w2 es (casi) cero, la ecuacion normal de la recta no se puede despejar
+        # (division por cero) — la frontera es en realidad una linea VERTICAL en
+        # x1 = -b/w1 (es justo lo que pasa con XOR en algunas epocas)
         ax.axvline(-b / w[0], linestyle="--", color=COLOR_ACCENT, linewidth=2.5)
+    # si tanto w1 como w2 son cero (epoca 0, antes de aprender nada) no se dibuja
+    # ninguna recta todavia — no hay frontera definida sin pesos.
     ax.set_xlim(-0.5, 1.5); ax.set_ylim(-0.5, 1.5)
     ax.set_xlabel("x1"); ax.set_ylabel("x2")
     _style_axes(ax, "Frontera de decisión")
@@ -163,11 +198,15 @@ def graficar_frontera(snapshot, y, ax):
 
 
 def graficar_convergencia(history, epoca_actual, ax):
+    """Grafico de escalones (no barras) del numero de errores por epoca. Se usa
+    fill_between/steps-mid en vez de ax.bar() porque con muchas epocas finas, las
+    barras generaban un patron de rayas por moire al renderizar (bug ya corregido)."""
     epocas = [h[0] for h in history[1:]]
     errores = [h[3] for h in history[1:]]
     ax.fill_between(epocas, errores, step="mid", color=COLOR_DIM, alpha=0.7)
     ax.plot(epocas, errores, drawstyle="steps-mid", color=COLOR_INK, linewidth=1.2)
     if epoca_actual in epocas:
+        # marca con un punto la epoca que se esta mostrando ahora mismo
         idx = epocas.index(epoca_actual)
         ax.scatter([epoca_actual], [errores[idx]], color=COLOR_ACCENT, s=70, zorder=5,
                    edgecolors="white", linewidths=1.5)
@@ -182,6 +221,8 @@ st.markdown('<p class="eyebrow">ROSENBLATT · 1958 · MARK I PERCEPTRON</p>', un
 st.title("🧠 Simulador del Perceptrón")
 st.caption("La misma clase `Perceptron` en NumPy del notebook, corriendo en vivo.")
 
+# Panel plegable con las 3 formulas base del modelo (siempre las mismas,
+# no dependen de la compuerta elegida).
 with st.expander("📐 El modelo matemático", expanded=False):
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -199,11 +240,16 @@ with st.expander("📐 El modelo matemático", expanded=False):
 
 st.divider()
 
+# Controles principales: que compuerta, que tasa de aprendizaje, cuantas epocas
+# maximas entrenar. Cambiar cualquiera de estos dispara un rerun de todo el script
+# (asi funciona Streamlit) y por lo tanto un nuevo entrenamiento (o uno cacheado).
 c1, c2, c3 = st.columns(3)
 gate = c1.radio("Compuerta lógica", list(GATES.keys()), horizontal=True)
 lr = c2.select_slider("Tasa de aprendizaje (η)", options=[0.01, 0.05, 0.1, 0.2, 0.5], value=0.1)
 max_epochs = c3.number_input("Épocas máx.", min_value=5, max_value=300, value=100, step=5)
 
+# Tabla de verdad + expresion booleana de la compuerta elegida, armada dinamicamente
+# con HTML (usa las clases .gate-math / .tabla-verdad definidas en el CSS de arriba).
 info = GATES_INFO[gate]
 y_gate = GATES[gate]
 filas_tabla = "".join(
@@ -226,13 +272,20 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Entrena (o recupera del cache) el historial completo de pesos por epoca para
+# la combinacion actual de compuerta / tasa de aprendizaje / epocas maximas.
 history, converged_at = entrenar(gate, lr, max_epochs)
 total_epocas = len(history) - 1
 
+# Slider para navegar manualmente por las epocas + boton para animarlas solo.
 col_slider, col_play = st.columns([5, 1])
 epoca_idx = col_slider.slider("Época", min_value=0, max_value=total_epocas, value=total_epocas)
 reproducir = col_play.button("▶ Reproducir", use_container_width=True)
 
+# st.empty() crea "huecos" reutilizables: se pueden volver a escribir muchas veces
+# sin crear elementos nuevos cada vez. Es lo que permite animar (reescribir estos
+# mismos huecos en un loop) en vez de que Streamlit vaya agregando graficos nuevos
+# uno debajo del otro.
 col_a, col_b = st.columns(2)
 plot_ph_a = col_a.empty()
 plot_ph_b = col_b.empty()
@@ -242,6 +295,8 @@ verdict_ph = st.empty()
 
 
 def _dibujar_epoca(idx):
+    """Renderiza el estado completo (2 graficos + pesos + ecuacion + veredicto)
+    correspondiente a la epoca `idx`, escribiendo sobre los placeholders de arriba."""
     snapshot = history[idx]
     _, w, b, errores = snapshot
 
@@ -276,6 +331,8 @@ def _dibujar_epoca(idx):
         unsafe_allow_html=True,
     )
 
+    # Tres estados posibles del veredicto: ya convergio, se acabaron las epocas
+    # sin converger, o todavia esta en pleno entrenamiento (durante la animacion).
     if converged_at is not None and idx >= converged_at:
         verdict_ph.markdown(
             f'<div class="verdict ok"><div class="tag">✓ Convergió</div>'
@@ -300,17 +357,29 @@ def _dibujar_epoca(idx):
 
 
 if reproducir:
+    # Animacion: recorre las epocas llamando _dibujar_epoca() en un loop con una
+    # pequena pausa entre cuadro y cuadro. Streamlit va mandando cada actualizacion
+    # de los placeholders al navegador a medida que se ejecuta, por eso se ve "en vivo"
+    # sin necesidad de recargar la pagina.
     max_frames = 60
+    # si hay muchas mas de 60 epocas (p. ej. XOR con 300), se muestran solo ~60
+    # cuadros repartidos parejo en vez de los 300 completos, para que la animacion
+    # no tarde demasiado — el resultado final se ve igual.
     paso = max(1, round(total_epocas / max_frames)) if total_epocas > max_frames else 1
-    indices = list(range(0, total_epocas, paso)) + [total_epocas]
-    delay = 0.4 if total_epocas <= 10 else 0.12
+    indices = list(range(0, total_epocas, paso)) + [total_epocas]  # asegura terminar en la ultima epoca
+    delay = 0.4 if total_epocas <= 10 else 0.12  # mas lento si hay pocos cuadros, para que se note
     for idx in indices:
         _dibujar_epoca(idx)
         time.sleep(delay)
 else:
+    # sin animacion: muestra directamente la epoca que indica el slider
     _dibujar_epoca(epoca_idx)
 
 st.divider()
+
+# Tabla comparativa: repite el entrenamiento de la compuerta actual con dos tasas
+# de aprendizaje distintas (0.1 y 0.01) para mostrar el efecto de eta en cuantas
+# epocas tarda en converger (o si nunca converge, como con XOR).
 st.markdown(f"### Efecto de la tasa de aprendizaje — {gate}")
 filas = []
 for lr_cmp in [0.1, 0.01]:
