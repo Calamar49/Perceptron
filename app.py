@@ -128,13 +128,12 @@ class Perceptron:
         return self
 
 
-# Las 4 compuertas logicas a simular, como tabla de verdad (mismo orden que X abajo:
-# (0,0), (0,1), (1,0), (1,1)). AND/OR/NAND son linealmente separables, XOR no.
+# Las compuertas logicas a simular, como tabla de verdad (mismo orden que X abajo:
+# (0,0), (0,1), (1,0), (1,1)). AND/OR son linealmente separables, XOR no.
 GATES = {
     "AND": np.array([0, 0, 0, 1]),
     "OR": np.array([0, 1, 1, 1]),
     "XOR": np.array([0, 1, 1, 0]),
-    "NAND": np.array([1, 1, 1, 0]),
 }
 
 # Texto de apoyo (expresion booleana + nota de separabilidad) que se muestra junto
@@ -143,7 +142,6 @@ GATES_INFO = {
     "AND": {"simbolo": "y = x₁ ∧ x₂", "nota": "1 solo si ambas entradas son 1. Linealmente separable."},
     "OR": {"simbolo": "y = x₁ ∨ x₂", "nota": "1 si al menos una entrada es 1. Linealmente separable."},
     "XOR": {"simbolo": "y = x₁ ⊕ x₂", "nota": "1 solo si las entradas son distintas. NO es linealmente separable."},
-    "NAND": {"simbolo": "y = ¬(x₁ ∧ x₂)", "nota": "el complemento de AND — compuerta universal. Linealmente separable."},
 }
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])  # las 4 combinaciones de entrada binaria
 
