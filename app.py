@@ -34,6 +34,16 @@ st.markdown(
                           margin-bottom: 8px; }
     .eq-card .eq { font-family: 'Courier New', monospace; font-weight: 700; font-size: .95rem;
                     color: #211d15; }
+    .gate-math { display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+                 background: #ece6d8; border-radius: 10px; padding: 14px 18px; margin: 10px 0 2px; }
+    .gate-math .simbolo { font-family: 'Courier New', monospace; font-weight: 700; font-size: 1.1rem;
+                           color: #0a8f78; }
+    .gate-math .nota { font-family: 'Courier New', monospace; font-size: .8rem; color: #6f6858; flex: 1; min-width: 220px; }
+    .tabla-verdad { border-collapse: collapse; font-family: 'Courier New', monospace; font-size: .85rem; }
+    .tabla-verdad th, .tabla-verdad td { border: 1px solid #d9d0bd; padding: 4px 12px; text-align: center; }
+    .tabla-verdad th { background: #0a8f78; color: #fffdf8; }
+    .tabla-verdad td.uno { color: #c1440e; font-weight: 700; }
+    .tabla-verdad td.cero { color: #1a5fb4; font-weight: 700; }
     .readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
                background: #d9d0bd; border: 1px solid #d9d0bd; border-radius: 10px;
                overflow: hidden; margin-top: 8px; }
@@ -102,6 +112,13 @@ GATES = {
     "OR": np.array([0, 1, 1, 1]),
     "XOR": np.array([0, 1, 1, 0]),
     "NAND": np.array([1, 1, 1, 0]),
+}
+
+GATES_INFO = {
+    "AND": {"simbolo": "y = x₁ ∧ x₂", "nota": "1 solo si ambas entradas son 1. Linealmente separable."},
+    "OR": {"simbolo": "y = x₁ ∨ x₂", "nota": "1 si al menos una entrada es 1. Linealmente separable."},
+    "XOR": {"simbolo": "y = x₁ ⊕ x₂", "nota": "1 solo si las entradas son distintas. NO es linealmente separable."},
+    "NAND": {"simbolo": "y = ¬(x₁ ∧ x₂)", "nota": "el complemento de AND — compuerta universal. Linealmente separable."},
 }
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 
@@ -184,6 +201,28 @@ c1, c2, c3 = st.columns(3)
 gate = c1.radio("Compuerta lógica", list(GATES.keys()), horizontal=True)
 lr = c2.select_slider("Tasa de aprendizaje (η)", options=[0.01, 0.05, 0.1, 0.2, 0.5], value=0.1)
 max_epochs = c3.number_input("Épocas máx.", min_value=5, max_value=300, value=100, step=5)
+
+info = GATES_INFO[gate]
+y_gate = GATES[gate]
+filas_tabla = "".join(
+    f"<tr><td>{x1}</td><td>{x2}</td><td class='{'uno' if y == 1 else 'cero'}'>{y}</td></tr>"
+    for (x1, x2), y in zip(X, y_gate)
+)
+st.markdown(
+    f"""
+    <div class="gate-math">
+      <table class="tabla-verdad">
+        <tr><th>x1</th><th>x2</th><th>y</th></tr>
+        {filas_tabla}
+      </table>
+      <div>
+        <div class="simbolo">{info['simbolo']}</div>
+        <div class="nota">{info['nota']}</div>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 history, converged_at = entrenar(gate, lr, max_epochs)
 total_epocas = len(history) - 1
