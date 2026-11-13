@@ -1,0 +1,23 @@
+{
+  "name": "freeling-nmlp-studio",
+  "version": "1.0.0",
+  "description": "Replicación interactiva en vivo del pipeline de Procesamiento de Lenguaje Natural (FreeLing UPC)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/nlp-test.js && node test/projector-test.js",
+    "build": "node build.js"
+  },
+  "keywords": [
+    "nlp",
+    "nmlp",
+    "freeling",
+    "tokenization",
+    "lemmatization",
+    "pos-tagging",
+    "stopwords"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

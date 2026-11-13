@@ -1,0 +1,125 @@
+/* FreeLing NMLP Studio - Stylesheet */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --bg-dark: #0b0f19;
+  --card-dark: #111827;
+  --border-dark: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-dark);
+  color: #f1f5f9;
+  overflow-x: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Glassmorphism card styles */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Pipeline Step Node glowing pulse */
+.pipeline-step-node {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pipeline-step-node.active-step {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+  transform: translateY(-2px);
+}
+
+/* Token chips animation */
+.token-chip {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.token-chip:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Stage Card Highlighting */
+.stage-card {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Live conveyor animation effect */
+@keyframes flowGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.conveyor-track {
+  background: linear-gradient(90deg, #312e81, #1e1b4b, #312e81);
+  background-size: 200% 200%;
+  animation: flowGlow 6s ease infinite;
+}
+
+/* Strikethrough Stopword Tag */
+.stopword-tag {
+  position: relative;
+}
+.stopword-tag::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1.5px;
+  background-color: #f43f5e;
+  transform: rotate(-5deg);
+}
+
+/* Pulse animation for live updates */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+}
+
+.live-indicator {
+  animation: pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

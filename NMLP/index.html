@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeLing NMLP Studio | Simulador en Vivo de Procesamiento de Lenguaje Natural</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            freeling: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold text-white tracking-tight">FreeLing Studio <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">NMLP Live</span></h1>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 mr-1 rounded-full bg-emerald-400 live-indicator"></span>
+              En Vivo
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Replicación y visualizador interactivo del pipeline lingüístico UPC</p>
+        </div>
+      </div>
+
+      <!-- Presets & Language Controls -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        
+        <!-- Preset Dropdown -->
+        <div class="flex items-center space-x-1.5">
+          <label for="preset-select" class="text-xs text-slate-400 font-medium">Ejemplo:</label>
+          <select id="preset-select" class="bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-slate-200 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="zorro">El zorro veloz y el perro (Completo)</option>
+            <option value="freeling">Acerca de FreeLing UPC</option>
+            <option value="quijote">Don Quijote de la Mancha</option>
+            <option value="tecnologia">Tecnología e Inteligencia Artificial</option>
+            <option value="ingles">English sample (The quick brown fox)</option>
+          </select>
+        </div>
+
+        <!-- Language Selector -->
+        <div class="flex items-center space-x-1.5">
+          <label for="language-select" class="text-xs text-slate-400 font-medium">Idioma:</label>
+          <select id="language-select" class="bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-slate-200 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="es">Español (es)</option>
+            <option value="en">English (en)</option>
+          </select>
+        </div>
+
+        <!-- View Switcher Tabs -->
+        <div class="flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-800 text-xs font-medium text-slate-300">
+          <label class="cursor-pointer">
+            <input type="radio" name="view-mode" value="pipeline" class="sr-only peer" checked>
+            <span class="block px-3 py-1.5 rounded-md peer-checked:bg-indigo-600 peer-checked:text-white transition-colors">Pipeline</span>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="view-mode" value="table" class="sr-only peer">
+            <span class="block px-3 py-1.5 rounded-md peer-checked:bg-indigo-600 peer-checked:text-white transition-colors">Tabla FreeLing</span>
+          </label>
+        </div>
+
+        <!-- Link to Embedding Projector 3D -->
+        <a href="embedding.html" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-md shadow-indigo-600/25 transition-all">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"></path></svg>
+          Proyector de Embeddings 3D
+        </a>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- TOP KPI METRICS SUMMARY -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="glass-card rounded-xl p-3.5 border border-slate-800/80">
+        <span class="text-[11px] font-medium text-slate-400 block mb-1">1. Frases</span>
+        <div class="flex items-baseline space-x-1">
+          <span id="metric-sentences" class="text-2xl font-bold text-white tracking-tight">0</span>
+          <span class="text-xs text-slate-500">oraciones</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-3.5 border border-slate-800/80">
+        <span class="text-[11px] font-medium text-slate-400 block mb-1">2. Tokens (1=1)</span>
+        <div class="flex items-baseline space-x-1">
+          <span id="metric-tokens" class="text-2xl font-bold text-indigo-400 tracking-tight">0</span>
+          <span class="text-xs text-slate-500">palabras</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-3.5 border border-slate-800/80">
+        <span class="text-[11px] font-medium text-slate-400 block mb-1">3. Lemas Únicos</span>
+        <div class="flex items-baseline space-x-1">
+          <span id="metric-lemmas" class="text-2xl font-bold text-emerald-400 tracking-tight">0</span>
+          <span class="text-xs text-slate-500">bases</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-3.5 border border-slate-800/80">
+        <span class="text-[11px] font-medium text-slate-400 block mb-1">4. Stopwords</span>
+        <div class="flex items-baseline space-x-1">
+          <span id="metric-stopwords" class="text-2xl font-bold text-rose-400 tracking-tight">0</span>
+          <span class="text-xs text-slate-500">vacías</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-3.5 border border-slate-800/80">
+        <span class="text-[11px] font-medium text-slate-400 block mb-1">5. Reducción</span>
+        <div class="flex items-baseline space-x-1">
+          <span id="metric-reduction" class="text-2xl font-bold text-amber-400 tracking-tight">0%</span>
+          <span class="text-xs text-slate-500">ahorro</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-3.5 border border-slate-800/80">
+        <span class="text-[11px] font-medium text-slate-400 block mb-1">6. Tiempo Pipeline</span>
+        <div class="flex items-baseline space-x-1">
+          <span id="metric-time" class="text-2xl font-bold text-cyan-400 tracking-tight">0 ms</span>
+          <span class="text-xs text-slate-500">latencia</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE PIPELINE STEPPER & ANIMATION BAR -->
+    <section class="glass-panel rounded-2xl p-4 border border-slate-800">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-800/80">
+        <div>
+          <h2 class="text-sm font-semibold text-white uppercase tracking-wider flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span>Pipeline de PLN en Vivo (Flujo Paso a Paso)</span>
+          </h2>
+          <p class="text-xs text-slate-400">Observa cómo cada palabra se transforma en cada etapa del proceso</p>
+        </div>
+
+        <!-- Playback Controller -->
+        <div class="flex items-center flex-wrap gap-2">
+          <button id="animate-play-btn" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition-all">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Reproducir en Vivo
+          </button>
+
+          <button id="animate-step-btn" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Avanzar un paso">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            Paso a Paso
+          </button>
+
+          <button id="animate-reset-btn" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all" title="Reiniciar visualizador">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </button>
+
+          <div class="flex items-center space-x-1.5 pl-2 border-l border-slate-800">
+            <label for="speed-select" class="text-xs text-slate-400">Velocidad:</label>
+            <select id="speed-select" class="bg-slate-900 border border-slate-700 rounded-md text-xs text-slate-300 px-2 py-1">
+              <option value="2000">0.5x</option>
+              <option value="1200" selected>1.0x</option>
+              <option value="600">2.0x</option>
+            </select>
+          </div>
+
+          <label class="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer pl-2 border-l border-slate-800">
+            <input type="checkbox" id="live-process-toggle" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+            <span>En vivo al tipear</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Flow Stepper Nodes -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-4">
+        <button data-step="1" class="pipeline-step-node flex items-center space-x-2.5 p-2 rounded-xl bg-indigo-600 text-white text-left ring-2 ring-indigo-400">
+          <span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold shrink-0">1</span>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold leading-tight truncate">Raw Data</div>
+            <div class="text-[9px] opacity-80 truncate">Texto original</div>
+          </div>
+        </button>
+
+        <button data-step="2" class="pipeline-step-node flex items-center space-x-2.5 p-2 rounded-xl bg-slate-800 text-slate-300 text-left hover:bg-slate-750">
+          <span class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">2</span>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold leading-tight truncate">Segmentación</div>
+            <div class="text-[9px] text-slate-400 truncate">Separación frases</div>
+          </div>
+        </button>
+
+        <button data-step="3" class="pipeline-step-node flex items-center space-x-2.5 p-2 rounded-xl bg-slate-800 text-slate-300 text-left hover:bg-slate-750">
+          <span class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">3</span>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold leading-tight truncate">Tokenización</div>
+            <div class="text-[9px] text-slate-400 truncate">1 Token = 1 Palabra</div>
+          </div>
+        </button>
+
+        <button data-step="4" class="pipeline-step-node flex items-center space-x-2.5 p-2 rounded-xl bg-slate-800 text-slate-300 text-left hover:bg-slate-750">
+          <span class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">4</span>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold leading-tight truncate">Lematización</div>
+            <div class="text-[9px] text-slate-400 truncate">Formas canónicas</div>
+          </div>
+        </button>
+
+        <button data-step="5" class="pipeline-step-node flex items-center space-x-2.5 p-2 rounded-xl bg-slate-800 text-slate-300 text-left hover:bg-slate-750">
+          <span class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">5</span>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold leading-tight truncate">POS Tagging</div>
+            <div class="text-[9px] text-slate-400 truncate">Etiquetas EAGLES</div>
+          </div>
+        </button>
+
+        <button data-step="6" class="pipeline-step-node flex items-center space-x-2.5 p-2 rounded-xl bg-slate-800 text-slate-300 text-left hover:bg-slate-750">
+          <span class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">6</span>
+          <div class="min-w-0">
+            <div class="text-[11px] font-bold leading-tight truncate">Stopwords</div>
+            <div class="text-[9px] text-slate-400 truncate">Filtro palabras vacías</div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- SECTION 1: EDITABLE RAW DATA INPUT -->
+    <section id="stage-card-1" class="stage-card glass-panel rounded-2xl p-5 border border-slate-800/90 shadow-xl transition-all">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-2">
+          <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-xs font-bold">1</span>
+          <div>
+            <h2 class="text-sm font-bold text-white tracking-tight">Entrada de Datos en Bruto (Raw Data)</h2>
+            <p class="text-xs text-slate-400">Introduce o edita cualquier texto en español para ejecutar todo el pipeline automáticamente</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span id="stage1-stats-badge" class="text-xs text-slate-400 px-2 py-1 rounded bg-slate-900 border border-slate-800 font-mono">0 caracteres</span>
+          <button id="paste-btn" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">Pegar</button>
+          <button id="clear-btn" class="text-xs px-2.5 py-1 rounded bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition-colors">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="relative">
+        <textarea id="raw-text-input" rows="3" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed font-sans shadow-inner resize-y transition-all" placeholder="Escribe o pega aquí el texto a analizar..."></textarea>
+      </div>
+    </section>
+
+    <!-- PIPELINE VIEW: DETAILED STAGES -->
+    <div id="pipeline-cards-section" class="space-y-6">
+
+      <!-- STAGE 2: SENTENCE SEGMENTATION -->
+      <section id="stage-card-2" class="stage-card glass-panel rounded-2xl p-5 border border-slate-800/90 shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-3.5">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-xs font-bold">2</span>
+            <div>
+              <h2 class="text-sm font-bold text-white tracking-tight">Segmentación de Frases (Sentence Splitting)</h2>
+              <p class="text-xs text-slate-400">Identificación de límites oracionales mediante puntuación (. ! ? \n) protegiendo abreviaturas y números</p>
+            </div>
+          </div>
+          <span class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Pasa el ratón sobre una frase para resaltar sus tokens</span>
+        </div>
+
+        <div id="sentences-container" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <!-- Sentences loaded dynamically -->
+        </div>
+      </section>
+
+      <!-- STAGE 3: TOKENIZATION (1 TOKEN = 1 PALABRA) -->
+      <section id="stage-card-3" class="stage-card glass-panel rounded-2xl p-5 border border-slate-800/90 shadow-xl transition-all">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-xs font-bold">3</span>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h2 class="text-sm font-bold text-white tracking-tight">Tokenización de Palabras</h2>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">1 Token = 1 Palabra</span>
+              </div>
+              <p class="text-xs text-slate-400">Los signos de puntuación se aíslan/descartan para que cada token equivalga estrictamente a una unidad léxica</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span id="stage3-count-badge" class="text-xs font-mono px-2 py-1 rounded bg-slate-900 text-indigo-300 border border-slate-800">0 palabras</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 mb-3 text-xs text-slate-400 flex items-center space-x-2">
+          <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Cada recuadro es un token léxico con su índice posicional. Haz clic en cualquier token para ver sus propiedades completas.</span>
+        </div>
+
+        <div id="tokens-container" class="flex flex-wrap gap-1.5 max-h-60 overflow-y-auto p-1">
+          <!-- Tokens rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- STAGE 4: LEMMATIZATION -->
+      <section id="stage-card-4" class="stage-card glass-panel rounded-2xl p-5 border border-slate-800/90 shadow-xl transition-all">
+        <div class="flex items-center justify-between mb-3.5">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xs font-bold">4</span>
+            <div>
+              <h2 class="text-sm font-bold text-white tracking-tight">Lematización (Forma Canónica / Infinitivo / Singular)</h2>
+              <p class="text-xs text-slate-400">Transformación morfológica que mapea formas flexivas (verbos conjugados, plurales, femeninos) a su lema del diccionario</p>
+            </div>
+          </div>
+          <span class="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Forma ➔ Lema</span>
+        </div>
+
+        <div id="lemmas-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-72 overflow-y-auto p-1">
+          <!-- Lemmas rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- STAGE 5: POS TAGGING -->
+      <section id="stage-card-5" class="stage-card glass-panel rounded-2xl p-5 border border-slate-800/90 shadow-xl transition-all">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3.5">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs font-bold">5</span>
+            <div>
+              <h2 class="text-sm font-bold text-white tracking-tight">Etiquetado Gramatical (PoS Tagging - FreeLing EAGLES & UPOS)</h2>
+              <p class="text-xs text-slate-400">Asignación de categoría gramatical y desambiguación contextual con etiquetas estándar de FreeLing</p>
+            </div>
+          </div>
+
+          <!-- POS Filter Bar -->
+          <div id="pos-filter-bar" class="flex flex-wrap items-center gap-1 text-[11px]">
+            <button data-upos="ALL" class="px-2 py-1 rounded bg-indigo-600 text-white font-medium hover:opacity-90 transition-all">
+              Todos (<span class="count-badge">0</span>)
+            </button>
+            <button data-upos="NOUN" class="px-2 py-1 rounded bg-slate-800 text-emerald-400 font-medium hover:bg-slate-700 transition-all border border-emerald-500/30">
+              Sustantivos (<span class="count-badge">0</span>)
+            </button>
+            <button data-upos="VERB" class="px-2 py-1 rounded bg-slate-800 text-blue-400 font-medium hover:bg-slate-700 transition-all border border-blue-500/30">
+              Verbos (<span class="count-badge">0</span>)
+            </button>
+            <button data-upos="ADJ" class="px-2 py-1 rounded bg-slate-800 text-amber-400 font-medium hover:bg-slate-700 transition-all border border-amber-500/30">
+              Adjetivos (<span class="count-badge">0</span>)
+            </button>
+            <button data-upos="ADV" class="px-2 py-1 rounded bg-slate-800 text-purple-400 font-medium hover:bg-slate-700 transition-all border border-purple-500/30">
+              Adverbios (<span class="count-badge">0</span>)
+            </button>
+            <button data-upos="DET" class="px-2 py-1 rounded bg-slate-800 text-cyan-400 font-medium hover:bg-slate-700 transition-all border border-cyan-500/30">
+              Determinantes (<span class="count-badge">0</span>)
+            </button>
+            <button data-upos="ADP" class="px-2 py-1 rounded bg-slate-800 text-slate-400 font-medium hover:bg-slate-700 transition-all border border-slate-600">
+              Preposiciones (<span class="count-badge">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <div id="pos-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-72 overflow-y-auto p-1">
+          <!-- POS Pills rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- STAGE 6: STOPWORD REMOVAL -->
+      <section id="stage-card-6" class="stage-card glass-panel rounded-2xl p-5 border border-slate-800/90 shadow-xl transition-all">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
+          <div class="flex items-center space-x-2">
+            <span class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-xs font-bold">6</span>
+            <div>
+              <h2 class="text-sm font-bold text-white tracking-tight">Filtrado y Eliminación de Stopwords (Palabras Vacías)</h2>
+              <p class="text-xs text-slate-400">Detección y purga de artículos, preposiciones y conectores sin valor semántico discriminativo</p>
+            </div>
+          </div>
+          <div class="text-xs text-right">
+            <span id="stopwords-progress-label" class="text-slate-300 font-medium">0% reducción</span>
+          </div>
+        </div>
+
+        <!-- Reduction Meter -->
+        <div class="w-full bg-slate-900 rounded-full h-2 mb-4 overflow-hidden border border-slate-800">
+          <div id="stopwords-progress-bar" class="bg-gradient-to-r from-indigo-500 via-amber-500 to-rose-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Diff view: Strikethrough for removed, bold for kept -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>Comparación Visual (Antes y Después)</span>
+              <span class="text-[10px] text-rose-400">Rojo tachado = Stopword</span>
+            </div>
+            <div id="stopwords-diff-container" class="flex flex-wrap gap-1 leading-relaxed max-h-48 overflow-y-auto p-1">
+              <!-- Diff tokens rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Clean semantic reconstructed output -->
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Texto Semántico Depurado (Tokens Clave)</span>
+                <span class="text-[10px] text-emerald-400 font-mono">Tokens conservados</span>
+              </div>
+              <p id="stopwords-clean-preview" class="text-sm text-slate-200 leading-relaxed font-sans italic bg-slate-950/60 p-3 rounded-lg border border-slate-800/80 min-h-[5rem]">
+                <!-- Clean reconstructed text -->
+              </p>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">
+              Esta lista de tokens limpios es la que posteriormente se vectoriza (TF-IDF, Embeddings, Bag-of-Words) en modelos de clasificación o búsqueda.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- TABULAR VIEW (FREELING DEMO VIEW) -->
+    <section id="freeling-table-section" class="glass-panel rounded-2xl p-5 border border-slate-800 shadow-xl hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-white tracking-tight flex items-center space-x-2">
+            <span>Tabla de Análisis Morfosintáctico FreeLing</span>
+            <span class="text-xs font-normal text-slate-400">(Forma • Lema • PoS EAGLES)</span>
+          </h2>
+          <p class="text-xs text-slate-400">Salida estructurada idéntica a la demo oficial de la UPC</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Search in Table -->
+          <div class="relative">
+            <input type="text" id="table-search-input" placeholder="Filtrar por palabra, lema o tag..." class="bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+
+          <!-- Export Buttons -->
+          <button id="export-freeling-btn" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors" title="Descargar como archivo texto FreeLing">
+            Exportar FreeLing (.txt)
+          </button>
+          <button id="export-csv-btn" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors">
+            CSV
+          </button>
+          <button id="export-json-btn" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors">
+            JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-[600px] overflow-y-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="sticky top-0 bg-slate-900 text-slate-400 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-800 z-10">
+            <tr>
+              <th class="py-3 px-3">#</th>
+              <th class="py-3 px-3">Forma (Token)</th>
+              <th class="py-3 px-3">Lema</th>
+              <th class="py-3 px-3">PoS (EAGLES)</th>
+              <th class="py-3 px-3">Categoría</th>
+              <th class="py-3 px-3">Morfología / Rasgos</th>
+              <th class="py-3 px-3">¿Stopword?</th>
+              <th class="py-3 px-3">Frase</th>
+            </tr>
+          </thead>
+          <tbody id="freeling-table-body" class="divide-y divide-slate-800/80">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EDUCATIONAL ACCORDION: HOW NMLP PIPELINE WORKS -->
+    <details class="glass-panel rounded-2xl p-4 border border-slate-800 group transition-all">
+      <summary class="cursor-pointer text-sm font-semibold text-slate-300 flex items-center justify-between">
+        <span class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          <span>¿Cómo funciona este pipeline de PLN (Procesamiento de Lenguaje Natural)?</span>
+        </span>
+        <span class="text-xs text-indigo-400 group-open:rotate-180 transition-transform">▼</span>
+      </summary>
+      <div class="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-3 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+            <span class="font-bold text-slate-200 block mb-1">1 & 2. Raw Data y Frases</span>
+            El texto en bruto se analiza reconociendo signos delimitadores oracionales (. ! ?) sin romper abreviaturas comunes como <em>Dr.</em>, <em>Sr.</em> o decimales numéricos.
+          </div>
+          <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+            <span class="font-bold text-slate-200 block mb-1">3 & 4. Tokens y Lemas</span>
+            Se aísla cada palabra léxica como un token individual (1 token = 1 palabra). A continuación, el lematizador reduce flexiones verbales, de género y de número a su forma de diccionario (infinitivo o singular).
+          </div>
+          <div class="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+            <span class="font-bold text-slate-200 block mb-1">5 & 6. PoS Tagging y Stopwords</span>
+            Se aplican etiquetas gramaticales universales y del estándar EAGLES (usado por FreeLing UPC). Finalmente, se descartan palabras funcionales de alta frecuencia para conservar únicamente términos con carga semántica.
+          </div>
+        </div>
+      </div>
+    </details>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>
+        FreeLing NMLP Studio • Replicación interactiva del pipeline de PLN (UPC FreeLing)
+      </div>
+      <div class="text-slate-400">
+        1 Token = 1 Palabra • Segmentación • Tokenización • Lematización • PoS • Stopwords
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPT BOOTSTRAP (Self-contained, works with file:/// and http://) -->
+  <script src="js/app.bundle.js"></script>
+</body>
+</html>

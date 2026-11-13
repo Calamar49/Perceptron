@@ -1,0 +1,108 @@
+/* Embedding Projector 3D - High-End Scientific Stylesheet */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-deep: #090d16;
+  --panel-bg: rgba(15, 23, 42, 0.75);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --accent-primary: #6366f1;
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #10b981;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-deep);
+  color: #f1f5f9;
+  overflow: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+  background: rgba(13, 19, 33, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-card {
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Custom Range Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #1e293b;
+  border-radius: 9999px;
+  height: 5px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* 3D Canvas Container */
+#canvas-3d-container {
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Dynamic 3D Labels */
+.projector-label {
+  font-family: 'Inter', sans-serif;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Tooltip floating HUD */
+#projector-tooltip {
+  pointer-events: none;
+  z-index: 50;
+  transition: opacity 0.1s ease;
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.35);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}

@@ -1,0 +1,172 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Embedding Projector 3D — Diagnóstico</title>
+<style>
+  /* layout: vertical report scroll — hero stat, diagnosis split, dataset citation cards, roadmap timeline */
+  :root{
+    --bg:#f3efe8; --surface:#ffffff; --ink:#1c1a17; --muted:#6b6459;
+    --accent:#b65c2e; --accent-2:#2f5d57; --bad:#a3352b; --good:#2f5d57;
+    --line:#e3dcd0;
+    --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17150f; --surface:#211e18; --ink:#f1ece2; --muted:#a89d8b;
+      --accent:#e08a56; --accent-2:#6fb3a8; --bad:#e8847a; --good:#6fb3a8;
+      --line:#35302a; color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17150f; --surface:#211e18; --ink:#f1ece2; --muted:#a89d8b;
+    --accent:#e08a56; --accent-2:#6fb3a8; --bad:#e8847a; --good:#6fb3a8;
+    --line:#35302a; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body);
+    padding-left:max(16px, env(safe-area-inset-left,0px));
+    padding-right:max(16px, env(safe-area-inset-right,0px));
+  }
+  .wrap{max-width:900px; margin:0 auto; padding-block:48px 80px;}
+  h1,h2,h3{font-family:var(--font-display); margin:0; text-wrap:balance;}
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent);}
+  header.hero{margin-bottom:56px;}
+  header.hero h1{font-size:clamp(28px,5vw,44px); line-height:1.1; margin-top:8px;}
+  header.hero p{color:var(--muted); font-size:16px; max-width:60ch; margin-top:14px;}
+  .meta-row{display:flex; gap:24px; flex-wrap:wrap; margin-top:28px;}
+  .meta-row div{font-family:var(--font-mono); font-size:12px; color:var(--muted);}
+  .meta-row strong{display:block; font-family:var(--font-display); font-size:15px; color:var(--ink);}
+
+  section{margin-bottom:56px;}
+  section > .eyebrow{display:block; margin-bottom:10px;}
+  section > h2{font-size:clamp(20px,3vw,28px); margin-bottom:18px;}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width:640px){.split{grid-template-columns:1fr;}}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px; min-width:0;}
+  .card h3{font-size:15px; display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+  .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .dot.bad{background:var(--bad);} .dot.good{background:var(--good);}
+  .card pre{background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px; font-family:var(--font-mono); font-size:11.5px; overflow-x:auto; line-height:1.5; margin:0 0 10px;}
+  .card p{font-size:13.5px; color:var(--muted); line-height:1.55; margin:0;}
+
+  .stat-row{display:flex; gap:16px; flex-wrap:wrap; margin-top:4px;}
+  .stat{flex:1 1 140px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px;}
+  .stat .num{font-family:var(--font-display); font-size:26px; font-variant-numeric:tabular-nums;}
+  .stat .num.bad{color:var(--bad);} .stat .num.good{color:var(--good);}
+  .stat .lbl{font-size:12px; color:var(--muted); margin-top:4px;}
+
+  .dataset-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px;}
+  .dcard{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; min-width:0; border-top:3px solid var(--accent-2);}
+  .dcard h3{font-size:16px; margin-bottom:8px;}
+  .dcard .cite{font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:10px;}
+  .dcard .src{font-family:var(--font-mono); font-size:11.5px; color:var(--accent-2); word-break:break-word;}
+  .dcard .use{font-size:12.5px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); color:var(--ink);}
+
+  .timeline{display:flex; flex-direction:column; gap:0; border-left:2px solid var(--line); margin-left:8px; padding-left:24px;}
+  .tstep{position:relative; padding-bottom:26px;}
+  .tstep:last-child{padding-bottom:0;}
+  .tstep::before{content:attr(data-n); position:absolute; left:-33px; top:0; width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff; font-family:var(--font-mono); font-size:11px; display:flex; align-items:center; justify-content:center;}
+  .tstep h3{font-size:14.5px; margin-bottom:4px;}
+  .tstep p{font-size:13px; color:var(--muted); margin:0; max-width:60ch;}
+
+  footer{border-top:1px solid var(--line); padding-top:20px; font-size:12px; color:var(--muted); font-family:var(--font-mono);}
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">NMLP · FreeLing Studio — Informe técnico</span>
+    <h1>Pipeline NLP tipo FreeLing y Embedding Projector 3D</h1>
+    <p>Dos módulos complementarios: un pipeline morfosintáctico de 6 etapas fiel a la taxonomía EAGLES/UPOS de FreeLing, y un proyector vectorial 3D (PCA, t-SNE, K-NN, analogías) que se alimentará de datasets reales citados.</p>
+    <div class="meta-row">
+      <div><strong>Módulos</strong>nlp-engine.js · embeddings-data.js</div>
+      <div><strong>Etapas del pipeline</strong>6</div>
+      <div><strong>Datasets reales citados</strong>4</div>
+      <div><strong>Fecha</strong>2026-11-13</div>
+    </div>
+  </header>
+
+  <section>
+    <span class="eyebrow">01 — Pipeline NLP tipo FreeLing</span>
+    <h2>Seis etapas de análisis morfosintáctico</h2>
+    <div class="timeline">
+      <div class="tstep" data-n="1"><h3>Raw Data</h3><p>Ingesta de texto libre con métricas en vivo: caracteres, líneas, párrafos y bytes UTF-8.</p></div>
+      <div class="tstep" data-n="2"><h3>Segmentación oracional</h3><p>Divide en oraciones protegiendo abreviaturas del español (Dr., Sr., pág., etc.) con un hash de abreviaturas.</p></div>
+      <div class="tstep" data-n="3"><h3>Tokenización estricta</h3><p>1 Token = 1 Palabra: la puntuación nunca se cuenta como token.</p></div>
+      <div class="tstep" data-n="4"><h3>Lematización morfológica</h3><p>Cascada: léxico directo → verbos irregulares (+250 formas) → adverbios en -mente → desinencias verbales → flexión nominal.</p></div>
+      <div class="tstep" data-n="5"><h3>POS Tagging (EAGLES / UPOS)</h3><p>Etiquetas oficiales FreeLing/UPC (NC, VMI, AQ, DA, SP…) junto a su equivalente Universal Dependencies.</p></div>
+      <div class="tstep" data-n="6"><h3>Filtrado de stopwords</h3><p>+300 palabras funcionales del español eliminadas, con % de reducción léxica calculado.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">02 — Embedding Projector 3D</span>
+    <h2>Motor de proyección vectorial</h2>
+    <div class="split">
+      <div class="card">
+        <h3><span class="dot good"></span>PCA</h3>
+        <p>Covarianza + iteración de potencia con deflación: reduce vectores de 50D a 3 ejes principales con varianza explicada.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot good"></span>t-SNE</h3>
+        <p>Proyección no lineal iterativa con perplejidad configurable, preserva vecindades locales en 3D.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot good"></span>K-NN coseno</h3>
+        <p>Búsqueda de documentos o palabras más cercanas en el espacio semántico de 50 dimensiones.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot good"></span>Analogías vectoriales</h3>
+        <p>A − B + C = D: rey−hombre+mujer=reina, madrid−españa+francia=parís.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">03 — Datasets reales citados</span>
+    <h2>Fuentes que alimentarán el Embedding Projector 3D</h2>
+    <div class="dataset-grid">
+      <div class="dcard">
+        <h3>Stanford GloVe (6B, 50d)</h3>
+        <div class="cite">Pennington, Socher &amp; Manning (2014). <em>GloVe: Global Vectors for Word Representation.</em> EMNLP 2014.</div>
+        <div class="src">nlp.stanford.edu/projects/glove</div>
+        <div class="use">Uso: analogías vectoriales (rey−hombre+mujer, madrid−españa+francia)</div>
+      </div>
+      <div class="dcard">
+        <h3>BBC News Classification</h3>
+        <div class="cite">Greene &amp; Cunningham (2006). <em>Diagonal Dominance in Kernel Document Clustering.</em> ICML 2006.</div>
+        <div class="src">mlg.ucd.ie/datasets/bbc.html</div>
+        <div class="use">Uso: documentos reales por categoría para PCA / t-SNE / K-NN</div>
+      </div>
+      <div class="dcard">
+        <h3>IMDB 50K Movie Reviews</h3>
+        <div class="cite">Maas et al. (2011). <em>Learning Word Vectors for Sentiment Analysis.</em> ACL-HLT 2011.</div>
+        <div class="src">ai.stanford.edu/~amaas/data/sentiment</div>
+        <div class="use">Uso: proyección 3D de sentimiento (positivo/negativo)</div>
+      </div>
+      <div class="dcard">
+        <h3>Spanish Billion Word Corpus</h3>
+        <div class="cite">Cardellino (2016). <em>Spanish Billion Words Corpus and Embeddings.</em></div>
+        <div class="src">crscardellino.ar/SBWCE</div>
+        <div class="use">Alternativa en español al GloVe en inglés</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">04 — Metodología de integración</span>
+    <h2>Cómo se incorporan los datasets reales</h2>
+    <div class="timeline">
+      <div class="tstep" data-n="1"><h3>Descarga</h3><p>glove.6B.50d.txt, bbc-text.csv e IMDB_Dataset.csv hacia data/raw/, fuera del repo versionado.</p></div>
+      <div class="tstep" data-n="2"><h3>Preprocesamiento</h3><p>GloVe: parseo directo. BBC/IMDB: TF-IDF + SVD a 50D, normalizado L2=1.0.</p></div>
+      <div class="tstep" data-n="3"><h3>Validación</h3><p>Reutilizar validate-dataset.js para confirmar norma unitaria de los vectores reales.</p></div>
+      <div class="tstep" data-n="4"><h3>Reemplazo</h3><p>Sustituir RAW_BBC_NEWS, RAW_GLOVE_WORDS, RAW_IMDB_REVIEWS manteniendo la interfaz actual.</p></div>
+      <div class="tstep" data-n="5"><h3>Verificación</h3><p>node build.js + npm test — confirmar que PCA/K-NN/analogías siguen funcionando, ahora con similitudes realistas.</p></div>
+    </div>
+  </section>
+
+  <footer>Informe completo: docs/informe-embedding-projector-3d.md · Cuadernos: docs/notebooks/01_glove_embeddings_exploracion.ipynb, 02_bbc_imdb_datasets_exploracion.ipynb</footer>
+</div>
