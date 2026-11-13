@@ -212,9 +212,9 @@ Resuelve relaciones del tipo *A − B + C = D* calculando el vector resultante `
 
 ---
 
-## 5. Datasets Reales a Utilizar (con cita y fuente)
+## 5. Datasets Reales Implementados (con cita y fuente)
 
-Para alimentar el Embedding Projector 3D con información verificable, se emplearán los siguientes datasets reales:
+**Estado: implementado.** El Embedding Projector 3D ya corre sobre los siguientes datasets reales (reemplazando por completo los vectores sintéticos de la versión inicial):
 
 | # | Dataset | Uso en el proyecto | Cita académica | Fuente de descarga oficial |
 |---|---|---|---|---|
@@ -225,16 +225,20 @@ Para alimentar el Embedding Projector 3D con información verificable, se emplea
 
 ---
 
-## 6. Metodología de Integración
+## 6. Metodología de Integración (ejecutada)
 
-1. **Descarga:** obtener `glove.6B.50d.txt` (Stanford), `bbc-text.csv` (BBC/UCD o Kaggle) e `IMDB_Dataset.csv` (Stanford AI / Kaggle) hacia una carpeta `data/raw/`.
+1. **Descarga:** `glove-wiki-gigaword-50` (vectores reales de Pennington et al. 2014, formato texto, 400.000 palabras), `bbc-fulltext.zip` (2.225 artículos reales de Greene & Cunningham 2006) e IMDB real vía el espejo `stanfordnlp/imdb` (mismo corpus de Maas et al. 2011).
 2. **Preprocesamiento:**
-   - GloVe: parseo directo línea a línea (`palabra` + 50 floats) con filtrado a un subvocabulario representativo.
-   - BBC News: tokenización + vectorización densa de documentos (TF-IDF seguido de reducción SVD a 50D).
-   - IMDB: muestreo estratificado balanceado (positivo/negativo) con el mismo pipeline de vectorización.
-3. **Validación de integridad:** uso de `validate-dataset.js` (norma L2 = 1.0) para confirmar que los vectores cumplen el contrato esperado por el motor de proyección.
-4. **Carga en el proyector:** poblar `RAW_BBC_NEWS`, `RAW_GLOVE_WORDS`, `RAW_IMDB_REVIEWS` en `embeddings-data.js`, preservando la interfaz (`title/category/snippet/vector`) consumida por `projection-engine.js` y `projector-3d.js`.
-5. **Regeneración de bundles:** `node build.js` + `npm test` para confirmar que PCA, K-NN y analogías funcionan correctamente sobre los datos reales.
+   - GloVe: parseo directo línea a línea, filtrado a las 54 palabras del vocabulario del proyector (traducidas a su equivalente en inglés, p. ej. *rey→king*), normalizadas a norma L2 = 1.0.
+   - BBC News: TF-IDF + `TruncatedSVD` a 50D ajustado sobre los 2.225 artículos reales; se conservó una muestra balanceada de 37 artículos (headlines y snippets reales, en el idioma original del corpus).
+   - IMDB: 18 reseñas reales balanceadas (9 positivas / 9 negativas), vectorizadas con TF-IDF + SVD a 50D.
+3. **Validación de integridad:** `validate-dataset.js` confirma norma L2 = 1.0 ± 0.0000 en los tres datasets (37 BBC, 54 GloVe, 18 IMDB).
+4. **Carga en el proyector:** `RAW_BBC_NEWS`, `RAW_GLOVE_WORDS`, `RAW_IMDB_REVIEWS` en `embeddings-data.js` fueron reemplazados por los vectores reales precomputados, manteniendo intacta la interfaz consumida por `projection-engine.js` y `projector-3d.js`.
+5. **Regeneración y pruebas:** `node build.js` + `npm test` pasan correctamente. Las similitudes ahora son realistas en vez de artificialmente perfectas:
+   - *rey − hombre + mujer = reina* → similitud **0.852** (antes 0.99 simulado).
+   - *madrid − españa + francia = parís* → similitud **0.825** (antes 0.99 simulado).
+   - K-NN sobre BBC News real: el vecino más cercano de *"Microsoft debuts security tools"* es *"Cyber crime booms in 2004"* (similitud 0.654), ambos de la categoría Tecnología.
+6. **Verificación en navegador:** la aplicación (`embedding.html`) se probó en vivo — el selector de dataset, la búsqueda K-NN y la calculadora de analogías funcionan correctamente sobre los tres datasets reales, sin errores de consola.
 
 ---
 
