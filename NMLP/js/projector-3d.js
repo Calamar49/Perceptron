@@ -26,6 +26,7 @@ export class Projector3D {
     this.selectedPointId = null;
     this.hoveredPointId = null;
     this.neighborLines = [];
+    this.imageTextureCache = new Map();
 
     this.initThree();
     this.initEvents();
@@ -181,6 +182,52 @@ export class Projector3D {
   }
 
   /**
+   * Build (or reuse from cache) a circular, category-colored framed texture for an
+   * image data-URI. The colored circle renders immediately; the real photo is drawn
+   * on top once it finishes decoding (fast for small base64 PNGs).
+   */
+  getFramedImageTexture(dataUri, colorHex) {
+    if (this.imageTextureCache.has(dataUri)) {
+      return this.imageTextureCache.get(dataUri);
+    }
+
+    const size = 160;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = colorHex || '#ffffff';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+
+    const img = new Image();
+    img.onload = () => {
+      const inset = 10;
+      const innerSize = size - inset * 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, innerSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.imageSmoothingEnabled = false; // preserve crisp pixel look of small real images
+      ctx.drawImage(img, inset, inset, innerSize, innerSize);
+      ctx.restore();
+      texture.needsUpdate = true;
+    };
+    img.src = dataUri;
+
+    this.imageTextureCache.set(dataUri, texture);
+    return texture;
+  }
+
+  /**
    * Set and render data points with 3D/2D coordinates
    */
   setData(points, coordinates) {
@@ -188,31 +235,45 @@ export class Projector3D {
     this.currentCoords = coordinates;
 
     // Clear previous elements
+    // Note: THREE.Sprite instances share a single module-level BufferGeometry singleton
+    // internally, so it must never be disposed here (it would break every sprite, including
+    // future ones) — only dispose geometry that belongs to a regular Mesh (the spheres).
     while (this.nodesGroup.children.length > 0) {
       const obj = this.nodesGroup.children[0];
-      if (obj.geometry) obj.geometry.dispose();
+      if (obj.isMesh && obj.geometry) obj.geometry.dispose();
       this.nodesGroup.remove(obj);
     }
     this.nodeMeshes = [];
     this.labelsContainer.innerHTML = '';
 
     const sphereGeo = new THREE.SphereGeometry(this.options.pointSize, 16, 16);
+    const spriteBaseScale = 6; // multiplier applied over pointSize for image sprites
 
     points.forEach((p, idx) => {
       const coord = coordinates[idx] || [0, 0, 0];
       const colorHex = parseInt(p.color.replace('#', '0x'), 16);
 
-      const mat = new THREE.MeshStandardMaterial({
-        color: colorHex,
-        emissive: colorHex,
-        emissiveIntensity: 0.35,
-        roughness: 0.3,
-        metalness: 0.2
-      });
+      let mesh;
+      if (p.isImage && p.image) {
+        const texture = this.getFramedImageTexture(p.image, p.color);
+        const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+        mesh = new THREE.Sprite(spriteMat);
+        const s = spriteBaseScale * (this.options.pointSize / 2.5);
+        mesh.scale.set(s, s, 1);
+        mesh.userData = { id: p.id, word: p.word, category: p.category, color: p.color, index: idx, isSprite: true, baseScale: spriteBaseScale };
+      } else {
+        const mat = new THREE.MeshStandardMaterial({
+          color: colorHex,
+          emissive: colorHex,
+          emissiveIntensity: 0.35,
+          roughness: 0.3,
+          metalness: 0.2
+        });
+        mesh = new THREE.Mesh(sphereGeo, mat);
+        mesh.userData = { id: p.id, word: p.word, category: p.category, color: p.color, index: idx };
+      }
 
-      const mesh = new THREE.Mesh(sphereGeo, mat);
       mesh.position.set(coord[0], coord[1], coord[2]);
-      mesh.userData = { id: p.id, word: p.word, category: p.category, color: p.color, index: idx };
 
       this.nodesGroup.add(mesh);
       this.nodeMeshes.push(mesh);
@@ -372,7 +433,14 @@ export class Projector3D {
     this.options.pointSize = size;
     if (this.nodeMeshes) {
       const scale = size / 2.5;
-      this.nodeMeshes.forEach(m => m.scale.set(scale, scale, scale));
+      this.nodeMeshes.forEach(m => {
+        if (m.userData && m.userData.isSprite) {
+          const s = (m.userData.baseScale || 6) * scale;
+          m.scale.set(s, s, 1);
+        } else {
+          m.scale.set(scale, scale, scale);
+        }
+      });
     }
   }
 

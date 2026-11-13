@@ -91,6 +91,8 @@ export class ProjectorController {
     this.inspectBadge = document.getElementById('inspect-badge');
     this.inspectSnippetBox = document.getElementById('inspect-snippet-box');
     this.inspectSnippet = document.getElementById('inspect-snippet');
+    this.inspectImageBox = document.getElementById('inspect-image-box');
+    this.inspectImage = document.getElementById('inspect-image');
     this.neighborsContainer = document.getElementById('neighbors-container');
 
     // Vector Arithmetic Elements
@@ -232,7 +234,8 @@ export class ProjectorController {
 
   updateStatsBadges() {
     const meta = DATASET_METADATA[this.currentDatasetKey] || {};
-    this.pointCountBadge.textContent = `${this.activeDataset.length} ${meta.type === 'document' ? 'artículos' : 'vectores'}`;
+    const unit = meta.type === 'document' ? 'artículos' : meta.type === 'image' ? 'imágenes' : 'vectores';
+    this.pointCountBadge.textContent = `${this.activeDataset.length} ${unit}`;
     this.dimBadge.textContent = `50D ➔ ${this.is3D ? '3D' : '2D'}`;
   }
 
@@ -414,6 +417,13 @@ export class ProjectorController {
       this.inspectSnippet.textContent = pt.snippet;
     } else {
       this.inspectSnippetBox.classList.add('hidden');
+    }
+
+    if (pt.isImage && pt.image && this.inspectImageBox) {
+      this.inspectImage.src = pt.image;
+      this.inspectImageBox.classList.remove('hidden');
+    } else if (this.inspectImageBox) {
+      this.inspectImageBox.classList.add('hidden');
     }
 
     // Compute K-NN

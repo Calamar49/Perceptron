@@ -6,13 +6,15 @@ console.log('--- TEST 1: REAL DATASET VERIFICATION (BBC NEWS & GLOVE & IMDB) ---
 const dsNews = buildDataset('bbc_news');
 const dsGlove = buildDataset('glove_words');
 const dsImdb = buildDataset('imdb_sentiment');
+const dsCifar = buildDataset('cifar_images');
 
 console.log(`1. BBC News Real Articles: ${dsNews.length} documentos`);
 console.log(`2. Stanford GloVe Embeddings: ${dsGlove.length} palabras`);
 console.log(`3. IMDB Sentiment Reviews: ${dsImdb.length} reseñas`);
+console.log(`4. CIFAR-10 Real Images: ${dsCifar.length} imágenes`);
 
 // Verify unit normalization on all real datasets
-[dsNews, dsGlove, dsImdb].forEach((dataset, idx) => {
+[dsNews, dsGlove, dsImdb, dsCifar].forEach((dataset, idx) => {
   let normValid = true;
   dataset.forEach(d => {
     const norm = Math.hypot(...d.vector);
@@ -58,6 +60,30 @@ console.log(`Fórmula: ${test2.formula}`);
 console.log(`Mejor candidato: ${test2.bestMatch.word} (Similaridad: ${test2.bestMatch.similarity.toFixed(4)})`);
 if (test2.bestMatch.word.toLowerCase() === 'parís') {
   console.log('✅ Verificación aprobada: madrid - españa + francia = parís.');
+}
+
+console.log('\n--- TEST 5: CIFAR-10 REAL IMAGE EMBEDDINGS (MOBILENETV2 + PCA) ---');
+if (!dsCifar.every(d => d.isImage && typeof d.image === 'string' && d.image.startsWith('data:image/'))) {
+  console.error('❌ Error: faltan miniaturas base64 válidas en el dataset de imágenes.');
+} else {
+  console.log(`✅ Verificación aprobada: ${dsCifar.length} imágenes reales con miniatura embebida (base64 PNG).`);
+}
+
+let sameSum = 0, sameCount = 0, diffSum = 0, diffCount = 0;
+for (let i = 0; i < dsCifar.length; i++) {
+  for (let j = i + 1; j < dsCifar.length; j++) {
+    const sim = VectorMath.cosineSimilarity(dsCifar[i].vector, dsCifar[j].vector);
+    if (dsCifar[i].category === dsCifar[j].category) { sameSum += sim; sameCount++; }
+    else { diffSum += sim; diffCount++; }
+  }
+}
+const sameAvg = sameSum / sameCount;
+const diffAvg = diffSum / diffCount;
+console.log(`Similitud coseno promedio — misma clase: ${sameAvg.toFixed(4)} | clases distintas: ${diffAvg.toFixed(4)}`);
+if (sameAvg > diffAvg) {
+  console.log('✅ Verificación aprobada: las imágenes de la misma clase son, en promedio, más similares que las de clases distintas.');
+} else {
+  console.error('❌ Alerta: la separación por clase no se mantiene en los embeddings reales.');
 }
 
 console.log('\n✨ TODOS LOS TESTS DE DATASETS REALES COMPLETADOS SATISFACTORIAMENTE!');

@@ -222,6 +222,7 @@ Resuelve relaciones del tipo *A − B + C = D* calculando el vector resultante `
 | 2 | **BBC News Classification Dataset** | Documentos de noticias reales agrupados por categoría (Tecnología, Negocios, Política, Deporte, Entretenimiento) para PCA / t-SNE / K-NN | Greene, D., & Cunningham, P. (2006). *Practical Solutions to the Problem of Diagonal Dominance in Kernel Document Clustering.* Proc. 23rd International Conference on Machine Learning (ICML 2006). | http://mlg.ucd.ie/datasets/bbc.html (también disponible como *BBC News Classification* en Kaggle: https://www.kaggle.com/competitions/learn-ai-bbc) |
 | 3 | **IMDB Dataset of 50K Movie Reviews** | Análisis de sentimiento (Positivo/Negativo) proyectado en 3D | Maas, A. L., Daly, R. E., Pham, P. T., Huang, D., Ng, A. Y., & Potts, C. (2011). *Learning Word Vectors for Sentiment Analysis.* Proceedings of the 49th Annual Meeting of the ACL (ACL-HLT 2011), pp. 142–150. | https://ai.stanford.edu/~amaas/data/sentiment/ (también en Kaggle: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews) |
 | 4 | **Spanish Billion Word Corpus / SBWCE embeddings** | Vocabulario en español real (complemento/alternativa a GloVe en inglés) | Cardellino, C. (2016). *Spanish Billion Words Corpus and Embeddings.* | https://crscardellino.ar/SBWCE/ |
+| 5 | **CIFAR-10 (imágenes reales)** | Dataset de imágenes: 50 fotos reales (5 por clase, 10 clases), con miniaturas reales renderizadas como sprites 3D en el proyector | Krizhevsky, A. (2009). *Learning Multiple Layers of Features from Tiny Images.* | https://www.cs.toronto.edu/~kriz/cifar.html |
 
 ---
 
@@ -238,7 +239,8 @@ Resuelve relaciones del tipo *A − B + C = D* calculando el vector resultante `
    - *rey − hombre + mujer = reina* → similitud **0.852** (antes 0.99 simulado).
    - *madrid − españa + francia = parís* → similitud **0.825** (antes 0.99 simulado).
    - K-NN sobre BBC News real: el vecino más cercano de *"Microsoft debuts security tools"* es *"Cyber crime booms in 2004"* (similitud 0.654), ambos de la categoría Tecnología.
-6. **Verificación en navegador:** la aplicación (`embedding.html`) se probó en vivo — el selector de dataset, la búsqueda K-NN y la calculadora de analogías funcionan correctamente sobre los tres datasets reales, sin errores de consola.
+6. **Verificación en navegador:** la aplicación (`embedding.html`) se probó en vivo — el selector de dataset, la búsqueda K-NN y la calculadora de analogías funcionan correctamente sobre los cuatro datasets reales, sin errores de consola.
+7. **Dataset de imágenes (CIFAR-10):** se añadió un cuarto dataset real de imágenes. 50 fotos reales de CIFAR-10 (5 por clase, 10 clases: avión, automóvil, pájaro, gato, ciervo, perro, rana, caballo, barco, camión) se procesaron con `MobileNetV2` (preentrenada en ImageNet, 1280D) y se redujeron a 50D con PCA real, normalizadas a L2 = 1.0. Las miniaturas reales se renderizan como *sprites* 3D con marco de color por categoría en `projector-3d.js`, y se muestran en el panel inspector al seleccionarlas. Verificación: similitud coseno promedio intra-clase (0.1168) mayor que la inter-clase (-0.0323), confirmando separación semántica real, aunque modesta (esperable dada la baja resolución 32×32 de CIFAR-10).
 
 ---
 

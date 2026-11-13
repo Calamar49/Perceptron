@@ -64,9 +64,10 @@
     <div class="flex items-center space-x-1.5">
       <label for="dataset-select" class="text-xs text-slate-400 font-medium hidden sm:inline">Dataset:</label>
       <select id="dataset-select" class="bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-slate-100 px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-        <option value="bbc_news" selected>📰 BBC News (100+ Artículos Reales)</option>
+        <option value="bbc_news" selected>📰 BBC News (37 Artículos Reales)</option>
         <option value="glove_words">🧠 Stanford GloVe (Wikipedia Word Embeddings)</option>
         <option value="imdb_sentiment">🎬 IMDB Reviews (Sentimientos Positivos vs Negativos)</option>
+        <option value="cifar_images">🖼️ CIFAR-10 (50 Imágenes Reales)</option>
       </select>
     </div>
 
@@ -302,6 +303,11 @@
 
           <!-- Active Point Content -->
           <div id="inspector-content" class="space-y-3 hidden">
+            <!-- Real Image Preview (CIFAR-10) -->
+            <div id="inspect-image-box" class="flex justify-center p-3 rounded-xl bg-slate-900/80 border border-slate-800 hidden">
+              <img id="inspect-image" src="" alt="Imagen real seleccionada" class="w-28 h-28 rounded-full object-cover border-2 border-indigo-500/60 shadow-lg" />
+            </div>
+
             <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
               <div>
                 <h3 id="inspect-word" class="text-sm font-bold text-white tracking-tight">palabra</h3>
